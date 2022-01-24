@@ -3,6 +3,8 @@ import os
 import discord
 from discord.ext import commands
 from cogs.loader import Loader
+from cogs.matchmaking import MatchMaking
+from cogs.match_handler import MatchHandler
 
 
 from src.logger import create_logger
@@ -30,8 +32,23 @@ def main():
             logger=logger
         )
     )
-    archive_bot.load_extension('cogs.matchmaking')
-    archive_bot.load_extension('cogs.match_handler')
+
+    archive_bot.add_cog(
+        MatchHandler(
+            bot=archive_bot,
+            logger=logger,
+            category_name="binaryge",
+        )
+    )
+
+    archive_bot.add_cog(
+        MatchMaking(
+            bot=archive_bot,
+            logger=logger,
+            category_name="binaryge",
+            channel_name="bynaryge-matchmaking",
+        )
+    )
     archive_bot.run(discord_token)
 
 

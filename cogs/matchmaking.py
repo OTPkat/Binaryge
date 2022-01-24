@@ -21,10 +21,7 @@ class MatchMaking(commands.Cog):
         self.category_name = category_name
         self.guild: Optional[discord.Guild] = None
         self.channel: Optional[discord.TextChannel] = None
-        self.matchmaking.start()
 
-    def cog_unload(self):
-        self.matchmaking.cancel()
 
     async def find_or_create_channel(self):
         matchmaking_channel = discord.utils.get(
@@ -72,19 +69,15 @@ class MatchMaking(commands.Cog):
             member_1=member_1, member_2=member_2, guild=self.guild
         )
 
-    @tasks.loop(seconds=60)
-    async def matchmaking(self):
-        while len(self.sign_ups_queue) > 1:
-            user_ids = random.sample(self.sign_ups_queue.keys(), 2)
-            self.logger.info(f"Creating Binaryge Match with users {user_ids}")
-            await self.create_match(
-                member_1=self.sign_ups_queue.pop(user_ids[0]),
-                member_2=self.sign_ups_queue.pop(user_ids[1]),
-            )
-
-    async def await_sign_ups(self):
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.logger.info('yoyo')
+        guilds = await self.bot.fetch_guilds(limit=2).flatten()
+        for guild in guilds:
+            self.guild = guild
+            await self.find_or_create_channel()
+            await self.post_embed()
         while True:
-
             def check(reaction, ctx):
                 return (
                     (not ctx.bot)
@@ -99,25 +92,10 @@ class MatchMaking(commands.Cog):
                 self.sign_ups_queue.pop(member.id, None)
             await self.update_matchmaking_embed()
             await reaction.remove(member)
-
-    @matchmaking.before_loop
-    async def before_matchmaking(self):
-        guilds = await self.bot.fetch_guilds(limit=2).flatten()
-        for guild in guilds:
-            self.guild = guild
-            await self.find_or_create_channel()
-            await self.post_embed()
-            await self.await_sign_ups()
-            break
-
-
-def setup(bot):
-    loader = bot.get_cog("Loader")
-    bot.add_cog(
-        MatchMaking(
-            bot=bot,
-            logger=loader.logger,
-            category_name="binaryge",
-            channel_name="bynaryge-matchmaking",
-        )
-    )
+            while len(self.sign_ups_queue) > 1:
+                user_ids = random.sample(self.sign_ups_queue.keys(), 2)
+                self.logger.info(f"Creating Binaryge Match with users {user_ids}")
+                await self.create_match(
+                    member_1=self.sign_ups_queue.pop(user_ids[0]),
+                    member_2=self.sign_ups_queue.pop(user_ids[1]),
+                )

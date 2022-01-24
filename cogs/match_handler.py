@@ -4,20 +4,7 @@ import discord
 from discord.ext import commands
 import logging
 from typing import Optional, Dict
-
-
-class Match:
-    def __init__(
-        self,
-        channel: discord.TextChannel,
-        message: discord.Message,
-        member_1: discord.Member,
-        member_2: discord.Member,
-    ):
-        self.channel = channel
-        self.message = message
-        self.member_1 = member_1
-        self.member_2 = member_2
+from schemas.match import Match
 
 
 class MatchHandler(commands.Cog):
@@ -67,7 +54,8 @@ class MatchHandler(commands.Cog):
         )
         return channel
 
-    def get_start_match_embed(self, member_1: discord.Member, member_2: discord.Member):
+    @staticmethod
+    def get_start_match_embed(member_1: discord.Member, member_2: discord.Member):
         u = random.randint(0, 1)
         n = random.randint(100, 10000)
         base_description = f"The game will start with n={'{0:b}'.format(n)}"
