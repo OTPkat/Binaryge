@@ -30,6 +30,8 @@ def main():
             logger=logger
         )
     )
+    archive_bot.load_extension('cogs.matchmaking')
+    archive_bot.load_extension('cogs.match_handler')
     archive_bot.run(discord_token)
 
 
