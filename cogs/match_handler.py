@@ -25,22 +25,21 @@ class MatchHandler(commands.Cog):
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
     ):
         match_channel = await self.create_match_channel(member_1=member_1, member_2=member_2, guild=guild)
-        match_embed = self.get_start_match_embed(member_1=member_1, member_2=member_2)
+        match_embed, n = self.get_start_match_embed(member_1=member_1, member_2=member_2)
         match_message = await match_channel.send(embed=match_embed)
         self.matches_per_channel_id[match_channel.id] = Match(
             channel=match_channel,
             member_1=member_1,
             member_2=member_2,
-            message=match_message
+            message=match_message,
+            n=n,
+            current_sum=0
         )
 
     async def create_match_channel(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
     ):
         overwrites = {
-            guild.default_role: discord.PermissionOverwrite(
-                read_messages=True, send_messages=False
-            ),
             member_1: discord.PermissionOverwrite(
                 read_messages=True, send_messages=True
             ),
@@ -68,7 +67,11 @@ class MatchHandler(commands.Cog):
             description=base_description,
             color=0x00F0FF,
         )
-        return embed_match
+        return embed_match, n
+
+    @commands.Cog.listener()
+    async def bym(self):
+        pass
 
 
 def setup(bot):

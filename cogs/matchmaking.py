@@ -71,7 +71,6 @@ class MatchMaking(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.logger.info('yoyo')
         guilds = await self.bot.fetch_guilds(limit=2).flatten()
         for guild in guilds:
             self.guild = guild
@@ -92,7 +91,7 @@ class MatchMaking(commands.Cog):
                 self.sign_ups_queue.pop(member.id, None)
             await self.update_matchmaking_embed()
             await reaction.remove(member)
-            while len(self.sign_ups_queue) > 1:
+            while len(self.sign_ups_queue) >= 2:
                 user_ids = random.sample(self.sign_ups_queue.keys(), 2)
                 self.logger.info(f"Creating Binaryge Match with users {user_ids}")
                 await self.create_match(
