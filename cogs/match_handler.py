@@ -44,7 +44,8 @@ class MatchHandler(commands.Cog):
             current_sum=n,
             start_date=datetime.datetime.now(),
             last_update=datetime.datetime.now(),
-            current_player=starting_member
+            current_player=starting_member,
+            first_player=starting_member
         )
 
     async def create_match_channel(
@@ -65,7 +66,7 @@ class MatchHandler(commands.Cog):
         return channel
 
     @staticmethod
-    def get_start_match_embed(starting_member:  discord.Member, n:int, current_sum: int):
+    def get_start_match_embed(starting_member:  discord.Member, n: int, current_sum: int):
         description = f"The game will start with n={'{0:b}'.format(n)}. {starting_member.mention} you start"
         embed_match = discord.Embed(
             title="Bynaryge's Match",
@@ -109,16 +110,17 @@ class MatchHandler(commands.Cog):
             if ctx.author.id == self.matches_per_channel_id[ctx.channel.id].current_player:
                 if is_positive_binary_string(submitted_binary_number):
                     if self.matches_per_channel_id[ctx.channel.id].check_addition(submitted_binary_number=submitted_binary_number):
-                        # todo update all metadata of the match
-                        # todo check if no move left
                         self.matches_per_channel_id[ctx.channel.id].add(submitted_binary_number=submitted_binary_number)
                         self.matches_per_channel_id[ctx.channel.id].update_current_player()
                         self.matches_per_channel_id[ctx.channel.id].last_update = datetime.datetime.now()
-                        updated_embed = self.get_embed_from_match(self.matches_per_channel_id[ctx.channel.id])
-                        await self.matches_per_channel_id[ctx.channel.id].message.edit(embed=updated_embed)
-                        await ctx.send(f"Valid play by {ctx.author.mention}")
-            else:
-                await ctx.send(f"It's not your turn")
+                        # todo improve the thing below to autodetect winner
+                        if not self.matches_per_channel_id[ctx.channel.id].is_finished():
+                            updated_embed = self.get_embed_from_match(self.matches_per_channel_id[ctx.channel.id])
+                            await self.matches_per_channel_id[ctx.channel.id].message.edit(embed=updated_embed)
+                            await ctx.send(f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!")
+
+                        else:
+                            await ctx.send(f"Match ended")
 
 
 def setup(bot):

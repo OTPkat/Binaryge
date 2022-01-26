@@ -1,8 +1,7 @@
-import datetime
-
 import discord
 import datetime
 from typing import Optional
+
 
 class Match:
     def __init__(
@@ -16,6 +15,7 @@ class Match:
         start_date: datetime.datetime,
         last_update: datetime.datetime,
         current_player: Optional[discord.Member] = None,
+        first_player: Optional[discord.Member] = None
     ):
         self.channel = channel
         self.message = message
@@ -26,15 +26,19 @@ class Match:
         self.start_date = start_date
         self.last_update = last_update
         self.current_player = current_player
+        self.first_player = first_player
 
-    def check_addition(self, submitted_binary_number: str):
+    def check_addition(self, submitted_binary_number: str) -> bool:
         return int(submitted_binary_number, 2) + self.current_sum <= 2*self.n
 
-    def add(self, submitted_binary_number: str):
+    def add(self, submitted_binary_number: str) -> None:
         self.current_sum += int(submitted_binary_number, 2)
 
-    def update_current_player(self):
+    def update_current_player(self) -> None:
         if self.member_1 == self.current_player:
             self.current_player = self.member_2
         else:
             self.current_player = self.member_1
+
+    def is_finished(self) -> bool:
+        return self.current_sum == 2*self.n
