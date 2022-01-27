@@ -83,7 +83,6 @@ class MatchHandler(commands.Cog):
             description=description,
             color=0xffb500,
         )
-
         embed_match.add_field(
             name=f"Embed Numbers",
             value=f"```{n_binary}```",
@@ -98,9 +97,16 @@ class MatchHandler(commands.Cog):
 
         embed_match.add_field(
             name="Current sum",
-            value=f"```{n}```",
+            value=f"```{n} = {n_binary}```",
             inline=False,
         )
+
+        embed_match.add_field(
+            name="Limit",
+            value=f"```{2*n} = {BinaryUtils.int_to_binary_string(2*n)}```",
+            inline=False,
+        )
+
         return embed_match
 
     @commands.command()
@@ -148,13 +154,11 @@ class MatchHandler(commands.Cog):
             self.logger.info("bad channel")
 
 
-
 def setup(bot):
     loader = bot.get_cog("Loader")
     bot.add_cog(
         MatchHandler(
             bot=bot,
             logger=loader.logger,
-            category_name="binaryge",
         )
     )
