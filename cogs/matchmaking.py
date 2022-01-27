@@ -3,6 +3,7 @@ from discord.ext import commands
 import logging
 from typing import Optional, Dict
 import random
+from static.bynaryge_embed_contents import bynaryge_rules, bynaryge_example
 
 
 class MatchMaking(commands.Cog):
@@ -35,18 +36,32 @@ class MatchMaking(commands.Cog):
     def get_matchmaking_embed(self):
         embed_matchmaking = discord.Embed(
             title="Bynaryge's Matchmaking",
-            description=f"React with ✅ to tag",
+            description=f"React with ✅ / ❎ to tag / untag yourself for a game! See the rules of the game below.",
             color=0x00F0FF,
         )
+
+        embed_matchmaking.add_field(
+            name="Rules",
+            value=bynaryge_rules,
+            inline=False,
+        )
+
+
+        embed_matchmaking.add_field(
+            name="Example",
+            value=bynaryge_example,
+            inline=False,
+        )
+
         if self.sign_ups_queue:
             embed_matchmaking.add_field(
-                name="Queued players for next batch:",
+                name="Queued players",
                 value=f"{' '.join([user.mention for user in self.sign_ups_queue.values()])}",
                 inline=False,
             )
         else:
             embed_matchmaking.add_field(
-                name="Queued players for next batch:",
+                name="Queued players",
                 value="Empty Queue",
                 inline=False,
             )

@@ -17,18 +17,16 @@ class MatchHandler(commands.Cog):
         self,
         bot: commands.Bot,
         logger: logging.Logger,
-        category_name: str,
     ):
         self.bot = bot
         self.logger = logger
-        self.category_name = category_name
         self.matches_per_channel_id: Optional[Dict[str, Match]] = {}
 
     async def create_match(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
     ):
         u = random.randint(0, 1)
-        n = random.randint(100, 10000)
+        n = random.randint(8, 128)
         if u:
             starting_member = member_1
         else:
@@ -76,7 +74,9 @@ class MatchHandler(commands.Cog):
     def get_start_match_embed(
         starting_member: discord.Member, n: int
     ):
-        description = f"The game will start with n={BinaryUtils.int_to_binary_string(n)}. {starting_member.mention} you start!"
+        n_binary = BinaryUtils.int_to_binary_string(n)
+        init_amount_of_1 = BinaryUtils.count_ones_from_binary_string(n_binary)
+        description = f"The game will start with n={n_binary}. {starting_member.mention} you start!"
         embed_match = discord.Embed(
             title="Bynaryge's Match",
             description=description,
@@ -85,23 +85,24 @@ class MatchHandler(commands.Cog):
 
         embed_match.add_field(
             name=f"Amount of 1 written on the binary Board",
-            value=f"{BinaryUtils.count_ones_in_binary_from_int(n)}",
+            value=f"{init_amount_of_1}",
             inline=False,
         )
 
         embed_match.add_field(
             name="Current sum in binary representation",
-            value=BinaryUtils.int_to_binary_string(n),
+            value=n_binary,
             inline=False,
         )
         return embed_match
 
-    @commands.Cog.listener()
+    @commands.command()
     async def bym(self, ctx, submitted_binary_number: str):
+        self.logger.info("Command bym received")
         if ctx.channel.id in self.matches_per_channel_id:
             if (
                 ctx.author.id
-                == self.matches_per_channel_id[ctx.channel.id].current_player
+                == self.matches_per_channel_id[ctx.channel.id].current_player.id
             ):
                 if BinaryUtils.is_positive_binary_string(submitted_binary_number):
                     if self.matches_per_channel_id[ctx.channel.id].check_addition(
@@ -124,11 +125,21 @@ class MatchHandler(commands.Cog):
                                 f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
                             )
                         else:
-                            # todo send to db before deleting
+                            # todo send to db before deleting make a terminate method in match class
+                            self.matches_per_channel_id[ctx.channel.id].winner = self.matches_per_channel_id[ctx.channel.id].current_player
                             self.matches_per_channel_id.pop(ctx.channel.id, None)
                             await ctx.send(
                                 f"Match ended with {ctx.author.mention} as winner :gladge: :hackermange:"
                             )
+                    else:
+                        self.logger.info("number too big")
+                else:
+                    self.logger.info("Wrong input")
+            else:
+                self.logger.info("not players turn")
+        else:
+            self.logger.info("bad channel")
+
 
 
 def setup(bot):

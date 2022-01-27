@@ -37,7 +37,6 @@ def main():
         MatchHandler(
             bot=archive_bot,
             logger=logger,
-            category_name="binaryge",
         )
     )
 
