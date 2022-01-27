@@ -15,11 +15,11 @@ class BinaryUtils(object):
 
     @classmethod
     def count_zeros_in_binary_from_int(cls, n: int):
-        return cls.count_ones_from_binary_string(cls.int_to_binary_string(n))
+        return cls.count_zeros_from_binary_string(cls.int_to_binary_string(n))
 
     @classmethod
     def count_ones_in_binary_from_int(cls, n: int):
-        return cls.count_zeros_from_binary_string(cls.int_to_binary_string(n))
+        return cls.count_ones_from_binary_string(cls.int_to_binary_string(n))
 
     @classmethod
     def int_to_binary_string(cls, n: int) -> str:

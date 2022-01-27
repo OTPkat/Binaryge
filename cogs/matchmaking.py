@@ -37,7 +37,7 @@ class MatchMaking(commands.Cog):
         embed_matchmaking = discord.Embed(
             title="Bynaryge's Matchmaking",
             description=f"React with ✅ / ❎ to tag / untag yourself for a game! See the rules of the game below.",
-            color=0x00F0FF,
+            color=0xffb500,
         )
 
         embed_matchmaking.add_field(
@@ -45,7 +45,6 @@ class MatchMaking(commands.Cog):
             value=bynaryge_rules,
             inline=False,
         )
-
 
         embed_matchmaking.add_field(
             name="Example",

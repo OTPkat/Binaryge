@@ -51,6 +51,7 @@ class MatchHandler(commands.Cog):
             first_player=starting_member,
             amount_of_1_on_board=BinaryUtils.count_ones_in_binary_from_int(n),
             amount_of_0_on_board=BinaryUtils.count_zeros_in_binary_from_int(n),
+            plays=[BinaryUtils.int_to_binary_string(n)]
         )
 
     async def create_match_channel(
@@ -76,22 +77,28 @@ class MatchHandler(commands.Cog):
     ):
         n_binary = BinaryUtils.int_to_binary_string(n)
         init_amount_of_1 = BinaryUtils.count_ones_from_binary_string(n_binary)
-        description = f"The game will start with n={n_binary}. {starting_member.mention} you start!"
+        description = f"The game is going on with n={n}={n_binary}. \n Use `!bym answer` to submit your answer \n {starting_member} your turn!."
         embed_match = discord.Embed(
             title="Bynaryge's Match",
             description=description,
-            color=0x00F0FF,
+            color=0xffb500,
         )
 
         embed_match.add_field(
-            name=f"Amount of 1 written on the binary Board",
-            value=f"{init_amount_of_1}",
+            name=f"Embed Numbers",
+            value=f"```{n_binary}```",
             inline=False,
         )
 
         embed_match.add_field(
-            name="Current sum in binary representation",
-            value=n_binary,
+            name=f"Amount of 1 written on the binary Board",
+            value=f"```{init_amount_of_1}```",
+            inline=False,
+        )
+
+        embed_match.add_field(
+            name="Current sum",
+            value=f"```{n}```",
             inline=False,
         )
         return embed_match

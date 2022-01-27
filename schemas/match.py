@@ -1,6 +1,6 @@
 import discord
 import datetime
-from typing import Optional
+from typing import Optional, List
 from src.utils import BinaryUtils
 
 
@@ -20,6 +20,7 @@ class Match:
         current_player: Optional[discord.Member] = None,
         first_player: Optional[discord.Member] = None,
         winner: Optional[discord.Member] = None,
+        plays: Optional[List[str]] = None
     ):
         self.channel = channel
         self.message = message
@@ -34,6 +35,7 @@ class Match:
         self.amount_of_0_on_board = amount_of_0_on_board
         self.amount_of_1_on_board = amount_of_1_on_board
         self.winner = winner
+        self.plays = plays
 
     def check_addition(self, submitted_binary_number: str) -> bool:
         return (
@@ -49,6 +51,7 @@ class Match:
             submitted_binary_number
         )
         self.current_sum += BinaryUtils.binary_string_to_int(submitted_binary_number)
+        self.plays.append(submitted_binary_number)
 
     def update_current_player(self) -> None:
         if self.member_1 == self.current_player:
@@ -69,23 +72,39 @@ class Match:
     def is_finished(self) -> bool:
         return (self.current_sum == 2 * self.n) or self.is_next_player_blocked()
 
+    def format_plays_to_string(self):
+        print(self.plays)
+        return "```" + ' \n'.join(self.plays) + "```"
+
     def get_embed_from_match(self):
-        description = f"The game is going on with n={BinaryUtils.int_to_binary_string(self.n)}. {self.current_player.mention} your turn!"
+        description = f"The game is going on with n={self.n}={BinaryUtils.int_to_binary_string(self.n)}. \n Use `!bym answer` to submit your answer \n {self.current_player.mention} your turn!."
         embed_match = discord.Embed(
             title="Bynaryge's Match",
             description=description,
-            color=0x00F0FF,
+            color=0xffb500,
         )
 
         embed_match.add_field(
-            name=f"Amount of 1 written on the binary Board",
-            value=f"{self.amount_of_1_on_board}",
+            name=f"Embed Numbers",
+            value=self.format_plays_to_string(),
             inline=False,
         )
 
         embed_match.add_field(
-            name="Current sum in binary representation",
-            value=f"{BinaryUtils.int_to_binary_string(self.current_sum)}",
+            name=f"Amount of 1 written on the binary Board",
+            value=f"```{self.amount_of_1_on_board}```",
+            inline=False,
+        )
+
+        embed_match.add_field(
+            name="Current sum",
+            value=f"```{self.current_sum} = {BinaryUtils.int_to_binary_string(self.current_sum)}```",
+            inline=False,
+        )
+
+        embed_match.add_field(
+            name="Limit",
+            value=f"```{2*self.n} = {BinaryUtils.int_to_binary_string(2*self.n)}```",
             inline=False,
         )
         return embed_match
