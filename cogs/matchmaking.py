@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import logging
 from typing import Optional, Dict
 import random
@@ -21,7 +21,6 @@ class MatchMaking(commands.Cog):
         self.category_name = category_name
         self.guild: Optional[discord.Guild] = None
         self.channel: Optional[discord.TextChannel] = None
-
 
     async def find_or_create_channel(self):
         matchmaking_channel = discord.utils.get(
@@ -77,6 +76,7 @@ class MatchMaking(commands.Cog):
             await self.find_or_create_channel()
             await self.post_embed()
         while True:
+
             def check(reaction, ctx):
                 return (
                     (not ctx.bot)

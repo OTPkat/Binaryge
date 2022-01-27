@@ -1,12 +1,13 @@
 import datetime
 import random
-from src.utils import is_positive_binary_string
+from src.utils import BinaryUtils
 import discord
 from discord.ext import commands
 import logging
 from typing import Optional, Dict
 from schemas.match import Match
-#https://discord.com/api/oauth2/authorize?client_id=935134455054602240&permissions=8&scope=bot
+
+# https://discord.com/api/oauth2/authorize?client_id=935134455054602240&permissions=8&scope=bot
 
 
 class MatchHandler(commands.Cog):
@@ -32,8 +33,12 @@ class MatchHandler(commands.Cog):
             starting_member = member_1
         else:
             starting_member = member_2
-        match_channel = await self.create_match_channel(member_1=member_1, member_2=member_2, guild=guild)
-        match_embed = self.get_start_match_embed(starting_member=starting_member, n=n, current_sum=n)
+        match_channel = await self.create_match_channel(
+            member_1=member_1, member_2=member_2, guild=guild
+        )
+        match_embed = self.get_start_match_embed(
+            starting_member=starting_member, n=n
+        )
         match_message = await match_channel.send(embed=match_embed)
         self.matches_per_channel_id[match_channel.id] = Match(
             channel=match_channel,
@@ -45,7 +50,9 @@ class MatchHandler(commands.Cog):
             start_date=datetime.datetime.now(),
             last_update=datetime.datetime.now(),
             current_player=starting_member,
-            first_player=starting_member
+            first_player=starting_member,
+            amount_of_1_on_board=BinaryUtils.count_ones_in_binary_from_int(n),
+            amount_of_0_on_board=BinaryUtils.count_zeros_in_binary_from_int(n),
         )
 
     async def create_match_channel(
@@ -66,40 +73,25 @@ class MatchHandler(commands.Cog):
         return channel
 
     @staticmethod
-    def get_start_match_embed(starting_member:  discord.Member, n: int, current_sum: int):
-        description = f"The game will start with n={'{0:b}'.format(n)}. {starting_member.mention} you start"
+    def get_start_match_embed(
+        starting_member: discord.Member, n: int
+    ):
+        description = f"The game will start with n={BinaryUtils.int_to_binary_string(n)}. {starting_member.mention} you start!"
         embed_match = discord.Embed(
             title="Bynaryge's Match",
             description=description,
             color=0x00F0FF,
         )
-        embed_match.add_field(
-            name="Current sum",
-            value=str(current_sum),
-            inline=False,
-        )
-        embed_match.add_field(
-            name="Current sum in binary representation",
-            value='{0:b}'.format(current_sum),
-            inline=False,
-        )
-        return embed_match
 
-    def get_embed_from_match(self, match: Match):
-        description = f"The game is going on with n={'{0:b}'.format(match.n)}. {match.current_player.mention} your turn"
-        embed_match = discord.Embed(
-            title="Bynaryge's Match",
-            description=description,
-            color=0x00F0FF,
-        )
         embed_match.add_field(
-            name="Current sum",
-            value=str(match.current_sum),
+            name=f"Amount of 1 written on the binary Board",
+            value=f"{BinaryUtils.count_ones_in_binary_from_int(n)}",
             inline=False,
         )
+
         embed_match.add_field(
             name="Current sum in binary representation",
-            value='{0:b}'.format(match.current_sum),
+            value=BinaryUtils.int_to_binary_string(n),
             inline=False,
         )
         return embed_match
@@ -107,20 +99,36 @@ class MatchHandler(commands.Cog):
     @commands.Cog.listener()
     async def bym(self, ctx, submitted_binary_number: str):
         if ctx.channel.id in self.matches_per_channel_id:
-            if ctx.author.id == self.matches_per_channel_id[ctx.channel.id].current_player:
-                if is_positive_binary_string(submitted_binary_number):
-                    if self.matches_per_channel_id[ctx.channel.id].check_addition(submitted_binary_number=submitted_binary_number):
-                        self.matches_per_channel_id[ctx.channel.id].add(submitted_binary_number=submitted_binary_number)
-                        self.matches_per_channel_id[ctx.channel.id].update_current_player()
-                        self.matches_per_channel_id[ctx.channel.id].last_update = datetime.datetime.now()
-                        # todo improve the thing below to autodetect winner
-                        if not self.matches_per_channel_id[ctx.channel.id].is_finished():
-                            updated_embed = self.get_embed_from_match(self.matches_per_channel_id[ctx.channel.id])
-                            await self.matches_per_channel_id[ctx.channel.id].message.edit(embed=updated_embed)
-                            await ctx.send(f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!")
-
+            if (
+                ctx.author.id
+                == self.matches_per_channel_id[ctx.channel.id].current_player
+            ):
+                if BinaryUtils.is_positive_binary_string(submitted_binary_number):
+                    if self.matches_per_channel_id[ctx.channel.id].check_addition(
+                        submitted_binary_number=submitted_binary_number
+                    ):
+                        self.matches_per_channel_id[ctx.channel.id].add(
+                            submitted_binary_number=submitted_binary_number
+                        )
+                        self.matches_per_channel_id[
+                            ctx.channel.id
+                        ].last_update = datetime.datetime.now()
+                        if not self.matches_per_channel_id[
+                            ctx.channel.id
+                        ].is_finished():
+                            self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].update_current_player()
+                            await self.matches_per_channel_id[ctx.channel.id].update_embed_match()
+                            await ctx.send(
+                                f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
+                            )
                         else:
-                            await ctx.send(f"Match ended")
+                            # todo send to db before deleting
+                            self.matches_per_channel_id.pop(ctx.channel.id, None)
+                            await ctx.send(
+                                f"Match ended with {ctx.author.mention} as winner :gladge: :hackermange:"
+                            )
 
 
 def setup(bot):
