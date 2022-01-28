@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import random
 from src.utils import BinaryUtils
@@ -11,7 +12,7 @@ from schemas.match import Match
 
 
 class MatchHandler(commands.Cog):
-    game_name: str = "bynaryge"
+    game_name: str = "Binerdge"
 
     def __init__(
         self,
@@ -34,9 +35,7 @@ class MatchHandler(commands.Cog):
         match_channel = await self.create_match_channel(
             member_1=member_1, member_2=member_2, guild=guild
         )
-        match_embed = self.get_start_match_embed(
-            starting_member=starting_member, n=n
-        )
+        match_embed = self.get_start_match_embed(starting_member=starting_member, n=n)
         match_message = await match_channel.send(embed=match_embed)
         self.matches_per_channel_id[match_channel.id] = Match(
             channel=match_channel,
@@ -51,13 +50,14 @@ class MatchHandler(commands.Cog):
             first_player=starting_member,
             amount_of_1_on_board=BinaryUtils.count_ones_in_binary_from_int(n),
             amount_of_0_on_board=BinaryUtils.count_zeros_in_binary_from_int(n),
-            plays=[BinaryUtils.int_to_binary_string(n)]
+            plays=[BinaryUtils.int_to_binary_string(n)],
         )
 
     async def create_match_channel(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
     ):
         overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
             member_1: discord.PermissionOverwrite(
                 read_messages=True, send_messages=True
             ),
@@ -72,16 +72,14 @@ class MatchHandler(commands.Cog):
         return channel
 
     @staticmethod
-    def get_start_match_embed(
-        starting_member: discord.Member, n: int
-    ):
+    def get_start_match_embed(starting_member: discord.Member, n: int):
         n_binary = BinaryUtils.int_to_binary_string(n)
         init_amount_of_1 = BinaryUtils.count_ones_from_binary_string(n_binary)
-        description = f"The game is going on with n={n}={n_binary}. \n Use `!bym answer` to submit your answer \n {starting_member} your turn!."
+        description = f"The game is going on with n={n}={n_binary}. \n Use `!bym answer` to submit your answer \n {starting_member.mention} your turn!"
         embed_match = discord.Embed(
-            title="Bynaryge's Match",
+            title="Binerdge's Match",
             description=description,
-            color=0xffb500,
+            color=0xFFB500,
         )
         embed_match.add_field(
             name=f"Embed Numbers",
@@ -133,23 +131,40 @@ class MatchHandler(commands.Cog):
                             self.matches_per_channel_id[
                                 ctx.channel.id
                             ].update_current_player()
-                            await self.matches_per_channel_id[ctx.channel.id].update_embed_match()
+                            await self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].update_embed_match()
                             await ctx.send(
                                 f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
                             )
                         else:
-                            # todo send to db before deleting make a terminate method in match class
-                            self.matches_per_channel_id[ctx.channel.id].winner = self.matches_per_channel_id[ctx.channel.id].current_player
-                            self.matches_per_channel_id.pop(ctx.channel.id, None)
                             await ctx.send(
-                                f"Match ended with {ctx.author.mention} as winner :gladge: :hackermange:"
+                                f"Match ended with {ctx.author.mention} as winner!"
                             )
+                            self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].winner = self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].current_player
+                            self.logger.info(
+                                f"{self.matches_per_channel_id[ctx.channel.id]} match ended - sending to database ..."
+                            )
+                            await asyncio.sleep(20)
+                            await self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].channel.delete()
+                            self.matches_per_channel_id.pop(ctx.channel.id, None)
+
                     else:
-                        self.logger.info("number too big")
+                        await ctx.send(
+                            f"{ctx.author.mention} your number is too big! Try something smaller"
+                        )
                 else:
-                    self.logger.info("Wrong input")
+                    await ctx.send(
+                        f"{ctx.author.mention} your input is not a strictly positive binary number"
+                    )
             else:
-                self.logger.info("not players turn")
+                await ctx.send(f"{ctx.author.mention} It's not your turn!")
         else:
             self.logger.info("bad channel")
 

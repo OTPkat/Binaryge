@@ -44,8 +44,7 @@ def main():
         MatchMaking(
             bot=archive_bot,
             logger=logger,
-            category_name="binaryge",
-            channel_name="bynaryge-matchmaking",
+            channel_name="binerdge-matchmaking",
         )
     )
     archive_bot.run(discord_token)

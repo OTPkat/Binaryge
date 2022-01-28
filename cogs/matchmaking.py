@@ -1,9 +1,10 @@
 import discord
-from discord.ext import commands
 import logging
 from typing import Optional, Dict
 import random
 from static.bynaryge_embed_contents import bynaryge_rules, bynaryge_example
+from src.command_check import only_owners
+from discord.ext import commands, tasks
 
 
 class MatchMaking(commands.Cog):
@@ -12,14 +13,12 @@ class MatchMaking(commands.Cog):
         bot: commands.Bot,
         logger: logging.Logger,
         channel_name: str,
-        category_name: str,
     ):
         self.bot = bot
         self.logger = logger
         self.message: Optional[discord.Message] = None
         self.sign_ups_queue: Optional[Dict[str, discord.User]] = {}
         self.channel_name = channel_name
-        self.category_name = category_name
         self.guild: Optional[discord.Guild] = None
         self.channel: Optional[discord.TextChannel] = None
 
@@ -35,9 +34,9 @@ class MatchMaking(commands.Cog):
 
     def get_matchmaking_embed(self):
         embed_matchmaking = discord.Embed(
-            title="Bynaryge's Matchmaking",
+            title="Binerdge's Matchmaking",
             description=f"React with ✅ / ❎ to tag / untag yourself for a game! See the rules of the game below.",
-            color=0xffb500,
+            color=0xFFB500,
         )
 
         embed_matchmaking.add_field(
@@ -66,6 +65,9 @@ class MatchMaking(commands.Cog):
             )
         return embed_matchmaking
 
+    def cog_unload(self):
+        self.atomic_match.cancel()
+
     async def post_embed(self):
         embed_matchmaking = self.get_matchmaking_embed()
         self.message: discord.Message = await self.channel.send(embed=embed_matchmaking)
@@ -82,15 +84,27 @@ class MatchMaking(commands.Cog):
             member_1=member_1, member_2=member_2, guild=self.guild
         )
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        guilds = await self.bot.fetch_guilds(limit=2).flatten()
-        for guild in guilds:
-            self.guild = guild
-            await self.find_or_create_channel()
-            await self.post_embed()
-        while True:
+    @tasks.loop(seconds=15)
+    async def atomic_match(self):
+        while len(self.sign_ups_queue) >= 2:
+            user_ids = random.sample(self.sign_ups_queue.keys(), 2)
+            self.logger.info(f"Creating Binerdge Match with users {user_ids}")
+            await self.create_match(
+                member_1=self.sign_ups_queue.pop(user_ids[0]),
+                member_2=self.sign_ups_queue.pop(user_ids[1]),
+            )
+            await self.update_matchmaking_embed()
 
+    @commands.check(only_owners)
+    @commands.command()
+    async def start_binerdge_matchmaking(self, ctx):
+        guild = ctx.guild
+        self.guild = guild
+        await self.find_or_create_channel()
+        await self.channel.purge(limit=200)
+        await self.post_embed()
+        self.atomic_match.start()
+        while True:
             def check(reaction, ctx):
                 return (
                     (not ctx.bot)
@@ -105,10 +119,4 @@ class MatchMaking(commands.Cog):
                 self.sign_ups_queue.pop(member.id, None)
             await self.update_matchmaking_embed()
             await reaction.remove(member)
-            while len(self.sign_ups_queue) >= 2:
-                user_ids = random.sample(self.sign_ups_queue.keys(), 2)
-                self.logger.info(f"Creating Binaryge Match with users {user_ids}")
-                await self.create_match(
-                    member_1=self.sign_ups_queue.pop(user_ids[0]),
-                    member_2=self.sign_ups_queue.pop(user_ids[1]),
-                )
+
