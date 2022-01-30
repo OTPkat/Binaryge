@@ -1,6 +1,6 @@
 from discord.ext import commands
 import logging
-from src.command_check import only_owners
+from utils.command_check import only_owners
 
 
 class Loader(commands.Cog):

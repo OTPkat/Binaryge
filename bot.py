@@ -7,8 +7,8 @@ from cogs.matchmaking import MatchMaking
 from cogs.match_handler import MatchHandler
 
 
-from src.logger import create_logger
-from src.secret import get_json_dict_from_secret_resource_id
+from utils.logger import create_logger
+from utils.secret import get_json_dict_from_secret_resource_id
 
 
 def main():

@@ -1,12 +1,12 @@
 import asyncio
 import datetime
 import random
-from src.utils import BinaryUtils
+from utils.binary import BinaryUtils
 import discord
 from discord.ext import commands
 import logging
 from typing import Optional, Dict
-from schemas.match import Match
+from src.match import BinerdgeDuel
 
 # https://discord.com/api/oauth2/authorize?client_id=935134455054602240&permissions=8&scope=bot
 
@@ -21,7 +21,7 @@ class MatchHandler(commands.Cog):
     ):
         self.bot = bot
         self.logger = logger
-        self.matches_per_channel_id: Optional[Dict[str, Match]] = {}
+        self.matches_per_channel_id: Optional[Dict[str, BinerdgeDuel]] = {}
 
     async def create_match(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
@@ -37,7 +37,7 @@ class MatchHandler(commands.Cog):
         )
         match_embed = self.get_start_match_embed(starting_member=starting_member, n=n)
         match_message = await match_channel.send(embed=match_embed)
-        self.matches_per_channel_id[match_channel.id] = Match(
+        self.matches_per_channel_id[match_channel.id] = BinerdgeDuel(
             channel=match_channel,
             member_1=member_1,
             member_2=member_2,
@@ -57,7 +57,9 @@ class MatchHandler(commands.Cog):
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
     ):
         overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            guild.default_role: discord.PermissionOverwrite(
+                read_messages=False
+            ),
             member_1: discord.PermissionOverwrite(
                 read_messages=True, send_messages=True
             ),
@@ -75,7 +77,7 @@ class MatchHandler(commands.Cog):
     def get_start_match_embed(starting_member: discord.Member, n: int):
         n_binary = BinaryUtils.int_to_binary_string(n)
         init_amount_of_1 = BinaryUtils.count_ones_from_binary_string(n_binary)
-        description = f"The game is going on with n={n}={n_binary}. \n Use `!bym answer` to submit your answer \n {starting_member.mention} your turn!"
+        description = f"The game is going on with `n={n}={n_binary}`. \n Use `!bym answer` to submit your answer \n {starting_member.mention} your turn!"
         embed_match = discord.Embed(
             title="Binerdge's Match",
             description=description,
@@ -88,7 +90,7 @@ class MatchHandler(commands.Cog):
         )
 
         embed_match.add_field(
-            name=f"Amount of 1 written on the binary Board",
+            name=f"Amount of 1 written in Embed Numbers",
             value=f"```{init_amount_of_1}```",
             inline=False,
         )
@@ -100,7 +102,7 @@ class MatchHandler(commands.Cog):
         )
 
         embed_match.add_field(
-            name="Limit",
+            name="Sum Limit",
             value=f"```{2*n} = {BinaryUtils.int_to_binary_string(2*n)}```",
             inline=False,
         )
@@ -134,10 +136,25 @@ class MatchHandler(commands.Cog):
                             await self.matches_per_channel_id[
                                 ctx.channel.id
                             ].update_embed_match()
-                            await ctx.send(
-                                f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
-                            )
+                            if self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].current_turn_message:
+                                await self.matches_per_channel_id[
+                                    ctx.channel.id
+                                ].current_turn_message.edit(
+                                    content=f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
+                                )
+                            else:
+                                turn_message = await ctx.send(
+                                    f"Valid play by {ctx.author.mention}, {self.matches_per_channel_id[ctx.channel.id].current_player.mention}, your turn!"
+                                )
+                                self.matches_per_channel_id[
+                                    ctx.channel.id
+                                ].current_turn_message = turn_message
                         else:
+                            await self.matches_per_channel_id[
+                                ctx.channel.id
+                            ].update_embed_match()
                             await ctx.send(
                                 f"Match ended with {ctx.author.mention} as winner!"
                             )
@@ -167,6 +184,11 @@ class MatchHandler(commands.Cog):
                 await ctx.send(f"{ctx.author.mention} It's not your turn!")
         else:
             self.logger.info("bad channel")
+
+        try:
+            await ctx.message.delete()
+        except Exception as e:
+            self.logger.info("Exc du to deleted channel - not a problem here.")
 
 
 def setup(bot):

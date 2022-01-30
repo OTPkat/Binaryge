@@ -3,7 +3,7 @@ import logging
 from typing import Optional, Dict
 import random
 from static.bynaryge_embed_contents import bynaryge_rules, bynaryge_example
-from src.command_check import only_owners
+from utils.command_check import only_owners
 from discord.ext import commands, tasks
 
 
@@ -84,7 +84,7 @@ class MatchMaking(commands.Cog):
             member_1=member_1, member_2=member_2, guild=self.guild
         )
 
-    @tasks.loop(seconds=15)
+    @tasks.loop(seconds=60*3)
     async def atomic_match(self):
         while len(self.sign_ups_queue) >= 2:
             user_ids = random.sample(self.sign_ups_queue.keys(), 2)
@@ -104,6 +104,7 @@ class MatchMaking(commands.Cog):
         await self.channel.purge(limit=200)
         await self.post_embed()
         self.atomic_match.start()
+        await ctx.message.delete()
         while True:
             def check(reaction, ctx):
                 return (
@@ -111,7 +112,6 @@ class MatchMaking(commands.Cog):
                     and str(reaction.emoji) in {"✅", "❎"}
                     and reaction.message == self.message
                 )
-
             reaction, member = await self.bot.wait_for("reaction_add", check=check)
             if reaction.emoji == "✅":
                 self.sign_ups_queue[member.id] = member

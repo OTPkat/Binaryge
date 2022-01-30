@@ -6,7 +6,8 @@ bynaryge_rules = "`Binerdge` is  a 1vs1 game. At the start of a party, a random 
                  " to submit wins if the total amount of 1's that has been written is odd"
 
 
-bynaryge_example = "Say the inital number sampled is `n = 1110 = 14`," \
+bynaryge_example = "<a:pepeJam:929537274293682226> and <a:NODDERS:929537274436272158>  start playing a match. " \
+                   "Say the inital sampled number is `n = 1110 = 14`," \
                    " it is the **first** number written on the match embed. " \
                    "So the match embed will look like: \n" \
                    "\n " \
@@ -16,7 +17,7 @@ bynaryge_example = "Say the inital number sampled is `n = 1110 = 14`," \
                    "```14```" \
                    "***Current amount of 1's*** \n" \
                    "```3```\n " \
-                   f" Madge and Sadge take turns, madge starts and submits `1100 = 12`. " \
+                   f" <a:pepeJam:929537274293682226> and <a:NODDERS:929537274436272158> take turns, <a:pepeJam:929537274293682226> starts and submits `1100 = 12`. " \
                    f"The match embedd updates to: \n" \
                    "\n " \
                    "***Embedd numbers ***\n" \
@@ -27,7 +28,7 @@ bynaryge_example = "Say the inital number sampled is `n = 1110 = 14`," \
                    "***Current amount of 1's*** \n" \
                    "```5```" \
                    "\n " \
-                   f"Now sadge can only play one or two. Say he plays `10=2`. The match embed updates to \n" \
+                   f"Now <a:NODDERS:929537274436272158> can only play one or two. Say he plays `10=2`. The match embed updates to \n" \
                    "\n " \
                    "***Embedd numbers ***\n" \
                    f"```1110 \n" \
@@ -39,6 +40,6 @@ bynaryge_example = "Say the inital number sampled is `n = 1110 = 14`," \
                    "```6```" \
                    "\n " \
                    f"Now since the sum cannot exceed `2n = 2*14 = 28`, there are no valid moves left." \
-                   f" The amount of 1's being even, Sadge wins. \n" \
+                   f" The amount of 1's being even, <a:NODDERS:929537274436272158>  wins. \n" \
 
 
