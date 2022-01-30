@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 import logging
 from typing import Optional, Dict
-from src.match import BinerdgeDuel
+from src.binerdge_duel import BinerdgeDuel
 
 # https://discord.com/api/oauth2/authorize?client_id=935134455054602240&permissions=8&scope=bot
 
@@ -118,10 +118,10 @@ class MatchHandler(commands.Cog):
                 == self.matches_per_channel_id[ctx.channel.id].current_player.id
             ):
                 if BinaryUtils.is_positive_binary_string(submitted_binary_number):
-                    if self.matches_per_channel_id[ctx.channel.id].check_addition(
+                    if self.matches_per_channel_id[ctx.channel.id].check_play(
                         submitted_binary_number=submitted_binary_number
                     ):
-                        self.matches_per_channel_id[ctx.channel.id].add(
+                        self.matches_per_channel_id[ctx.channel.id].process_play(
                             submitted_binary_number=submitted_binary_number
                         )
                         self.matches_per_channel_id[

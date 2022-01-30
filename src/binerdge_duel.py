@@ -4,6 +4,7 @@ from typing import Optional, List
 from utils.binary import BinaryUtils
 from src.abstract_duel import Duel
 from src.game_apis import BinerdgeApi
+from schemas.binerdge_duel import BinerdgeDuelSchema
 
 
 class BinerdgeDuel(Duel):
@@ -50,6 +51,20 @@ class BinerdgeDuel(Duel):
         self.winner = winner
         self.plays = plays
         self.current_turn_message: Optional[discord.Message] = None
+
+    def to_pydantic_schema(self) -> BinerdgeDuelSchema:
+        return BinerdgeDuelSchema(
+            channel_id=self.channel.id,
+            message_id=self.message.id,
+            member_1_id=self.member_1.id,
+            member_2_id=self.member_2.id,
+            ongoing=self.ongoing,
+            n=self.n,
+            start_date=self.start_date,
+            last_update=self.last_update,
+            winner_discord_user_id=self.winner.id,
+            first_player_id=self.first_player.id
+        )
 
     def check_play(self, submitted_binary_number: str) -> bool:
         return (
@@ -116,4 +131,6 @@ class BinerdgeDuel(Duel):
         )
         return embed_match
 
+    def terminate(self):
+        pass
 

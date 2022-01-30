@@ -3,6 +3,7 @@ from discord import Member, Message, TextChannel, Embed
 from typing import Optional, Type
 from datetime import datetime
 from src.game_apis import GameAPI
+from pydantic import BaseModel
 
 
 class Duel(ABC):
@@ -29,6 +30,10 @@ class Duel(ABC):
         self.start_date = start_date
         self.last_update = last_update
         self.ongoing = ongoing
+
+    @abstractmethod
+    def to_pydantic_schema(self) -> Type[BaseModel]:
+        pass
 
     @abstractmethod
     def check_play(self, *args) -> bool:
@@ -59,3 +64,4 @@ class Duel(ABC):
             self.current_player = self.member_2
         else:
             self.current_player = self.member_1
+
