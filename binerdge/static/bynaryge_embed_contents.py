@@ -1,4 +1,3 @@
-from static.emojis import nodder
 bynaryge_rules = "`Binerdge` is  a 1vs1 game. At the start of a party, a random number `n` will be sampled and written on" \
                  " the match embed. Then you will take turns with your opponent submitting binary numbers on the embed via" \
                  " the `!bym <binary_snumber>`. The sum of all submitted numbers (including the inital sampled " \

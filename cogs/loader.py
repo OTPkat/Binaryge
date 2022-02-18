@@ -37,13 +37,3 @@ class Loader(commands.Cog):
             await ctx.send(f"Error when trying to load cog : {e}")
         else:
             await ctx.send(f"Cog {module} loaded")
-
-    @commands.command()
-    @commands.check(only_owners)
-    async def print_extensions(self, ctx, module):
-        try:
-            await ctx.send(f"Currently loaded extensions : {self.bot.extensions()}")
-        except Exception as e:
-            await ctx.send(f"Error when trying to load cog : {e}")
-        else:
-            await ctx.send(f"Cog {module} loaded")

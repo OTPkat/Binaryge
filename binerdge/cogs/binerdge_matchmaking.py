@@ -2,10 +2,10 @@ import discord
 import logging
 from typing import Optional, Dict
 import random
-from static.bynaryge_embed_contents import bynaryge_rules, bynaryge_example
+from binerdge.static.bynaryge_embed_contents import bynaryge_rules, bynaryge_example
 from utils.command_check import only_owners
 from discord.ext import commands, tasks
-
+from discord.ui import Button, View
 
 class MatchMaking(commands.Cog):
     def __init__(
@@ -120,3 +120,59 @@ class MatchMaking(commands.Cog):
             await self.update_matchmaking_embed()
             await reaction.remove(member)
 
+    # @commands.check(only_owners)
+    # @commands.command()
+    # async def select(self, ctx):
+    #     await ctx.send(
+    #         "Queue for Bynerdge!",
+    #         components=[
+    #             Select(
+    #                 placeholder="kekw",
+    #                 options=[
+    #                     SelectOption(label="Queue", value="a"),
+    #                     SelectOption(label="Cancel", value="b"),
+    #                 ],
+    #                 custom_id="select1",
+    #             )
+    #         ],
+    #     )
+    #
+    #     interaction = await self.bot.wait_for(
+    #         "select_option", check=lambda inter: inter.custom_id == "select1"
+    #     )
+    #     await interaction.send(content=f"{interaction.values[0]} selected!")
+    #
+    # @commands.check(only_owners)
+    # @commands.command()
+    # async def button(self, ctx):
+    #     await ctx.send("Buttons!", components=[Button(label="Button", custom_id="button1")])
+    #     interaction = await self.bot.wait_for(
+    #         "button_click", check=lambda inter: inter.custom_id == "button1"
+    #     )
+    #     await interaction.send(content="Button Clicked")
+
+    @commands.check(only_owners)
+    @commands.command()
+    async def color_game(self, ctx):
+        players_per_color = {}
+        green_button = Button(
+            label="Green",
+            style=discord.ButtonStyle.green,
+            emoji="<a:PepegeClap:932346473922834552>",
+        )
+        red_button = Button(
+            label="Red",
+            style=discord.ButtonStyle.red,
+            emoji="<a:PepegeClap:932346473922834552>",
+        )
+
+        async def button_callback(interaction: discord.Interaction):
+            print(interaction)
+
+        green_button.callback = button_callback
+        red_button.callback = button_callback
+        view = View()
+        view.add_item(green_button)
+        view.add_item(red_button)
+
+        await ctx.send("Choose wisely your color", view=view)

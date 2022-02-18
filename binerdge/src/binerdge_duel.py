@@ -2,9 +2,9 @@ import discord
 from datetime import datetime
 from typing import Optional, List
 from utils.binary import BinaryUtils
-from src.abstract_duel import Duel
+from binerdge.src.abstract_duel import Duel
 from src.game_apis import BinerdgeApi
-from schemas.binerdge_duel import BinerdgeDuelSchema
+from binerdge.schemas.binerdge_duel import BinerdgeDuelSchema
 
 
 class BinerdgeDuel(Duel):

@@ -3,9 +3,7 @@ import os
 import discord
 from discord.ext import commands
 from cogs.loader import Loader
-from cogs.matchmaking import MatchMaking
-from cogs.match_handler import MatchHandler
-
+from color_game.cogs.color_game_cog import ColorGame
 
 from utils.logger import create_logger
 from utils.secret import get_json_dict_from_secret_resource_id
@@ -32,19 +30,11 @@ def main():
             logger=logger
         )
     )
-
     archive_bot.add_cog(
-        MatchHandler(
+        ColorGame(
             bot=archive_bot,
             logger=logger,
-        )
-    )
-
-    archive_bot.add_cog(
-        MatchMaking(
-            bot=archive_bot,
-            logger=logger,
-            channel_name="binerdge-matchmaking",
+            channel_name="01-color-game",
         )
     )
     archive_bot.run(discord_token)

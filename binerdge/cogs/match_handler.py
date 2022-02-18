@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 import logging
 from typing import Optional, Dict
-from src.binerdge_duel import BinerdgeDuel
+from binerdge.src.binerdge_duel import BinerdgeDuel
 
 # https://discord.com/api/oauth2/authorize?client_id=935134455054602240&permissions=8&scope=bot
 
@@ -21,7 +21,7 @@ class MatchHandler(commands.Cog):
     ):
         self.bot = bot
         self.logger = logger
-        self.matches_per_channel_id: Optional[Dict[str, BinerdgeDuel]] = {}
+        self.matches_per_channel_id: Optional[Dict[int, BinerdgeDuel]] = {}
 
     async def create_match(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
@@ -51,7 +51,10 @@ class MatchHandler(commands.Cog):
             amount_of_1_on_board=BinaryUtils.count_ones_in_binary_from_int(n),
             amount_of_0_on_board=BinaryUtils.count_zeros_in_binary_from_int(n),
             plays=[BinaryUtils.int_to_binary_string(n)],
+            ongoing=True
         )
+
+
 
     async def create_match_channel(
         self, member_1: discord.Member, member_2: discord.Member, guild: discord.Guild
