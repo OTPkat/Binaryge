@@ -11,11 +11,55 @@ from collections import Counter
 
 class ColorGameRound(ABC):
     round_name: str
-    emojis_per_color: Dict[str, str]
+    emojis: Set[str]
 
-    def __init__(self, allowed_player_ids: Set[str], bot: commands.Bot):
+    def __init__(
+        self,
+        allowed_player_ids: Set[str],
+        bot: commands.Bot,
+        button_style: discord.ButtonStyle,
+    ):
         self.allowed_player_ids = allowed_player_ids
         self.bot = bot
+        self.button_style = button_style
+        self.player_choices_message: Optional[discord.Message] = None
+        self.color_choice_per_user_id: Optional[Dict[int, str]] = dict()
+
+    def get_current_player_choices_embed(self):
+        color_counts = Counter(self.color_choice_per_user_id.values())
+        choices_embed = discord.Embed(
+            title=f"Choices Distribution - {self.round_name}",
+            description=f"There is currently a total of {sum(color_counts.values())} player(s)",
+            color=0x0052FB,
+        )
+        for choice, amount in color_counts.items():
+            choices_embed.add_field(name=choice, value=amount, inline=False)
+        return choices_embed
+
+    def get_view(self) -> View:
+        view = View()
+        for emoji in self.emojis:
+            button = Button(style=self.button_style, emoji=emoji, custom_id=emoji)
+
+            async def button_callback(interaction: discord.Interaction):
+                self.color_choice_per_user_id[interaction.user.id] = interaction.data[
+                    "custom_id"
+                ]
+                print(
+                    f"user {interaction.user.id} chose color: {interaction.data['custom_id']}"
+                )
+                choices_embed = self.get_current_player_choices_embed()
+                if self.player_choices_message:
+                    await self.player_choices_message.edit(embed=choices_embed)
+                else:
+                    player_choices_message = await interaction.channel.send(
+                        embed=choices_embed
+                    )
+                    self.player_choices_message = player_choices_message
+
+            button.callback = button_callback
+            view.add_item(button)
+        return view
 
     @abstractmethod
     def solve_round(self, ctx) -> Set[int]:
@@ -29,89 +73,44 @@ class ColorGameRound(ABC):
         ...
 
     @abstractmethod
-    def get_view(self) -> View:
-        ...
-
-    @abstractmethod
     async def start_round(self, ctx):
         ...
 
 
 class ColorGameFirstRound(ColorGameRound):
     round_name = "Follow them"
-    emojis_per_color = {
-        "Green": "<a:PepegeClap:932346473922834552>",
-        "Gray": "<a:bongoLove:940379773752979467>",
-        "Blurple": "<a:peepoRiot:933351979583930379>",
-        "Red": "<a:bongoPepe:940379774474420294>"}
+    emojis = {
+        "<a:PepegeClap:932346473922834552>",
+        "<a:bongoLove:940379773752979467>",
+        "<a:peepoRiot:933351979583930379>",
+        "<a:bongoPepe:940379774474420294>",
+    }
+    button_style = discord.ButtonStyle.blurple
 
-    def __init__(self, allowed_player_ids: Set[str], bot):
-        super().__init__(allowed_player_ids, bot)
-        self.color_choice_per_user_id: Optional[Dict[int, str]] = dict()
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style):
+        super().__init__(allowed_player_ids, bot, button_style)
 
     def get_embed(self) -> Embed:
         embed = discord.Embed(
             title=f"Color Game - {self.round_name}",
             description=f"Anyone can enter at this stage, simply choose a color. If you reclick a color, that will"
-                        f"simply update your choice.",
+            f"simply update your choice.",
             color=0x0052FB,
         )
 
         embed.add_field(
             name="Rules",
             value="In this round players have to choose a color. "
-                  "People having chosen one of the two most chosen colors will be eliminated."
-                  "You have 5 minutes.",
+            "People having chosen one of the two most chosen colors will be eliminated."
+            "You have 5 minutes.",
             inline=False,
         )
         return embed
 
-    def get_view(self) -> View:
-        green_button = Button(
-            label="Green",
-            style=discord.ButtonStyle.green,
-            emoji=self.emojis_per_color["Green"],
-            custom_id="Green"
-        )
-        red_button = Button(
-            label="Red",
-            style=discord.ButtonStyle.red,
-            emoji=self.emojis_per_color["Red"],
-            custom_id="Red"
-        )
-
-        gray_button = Button(
-            label="gray",
-            style=discord.ButtonStyle.gray,
-            emoji=self.emojis_per_color["Gray"],
-            custom_id="Gray"
-        )
-
-        blurple_button = Button(
-            label="blurple",
-            style=discord.ButtonStyle.blurple,
-            emoji=self.emojis_per_color["Blurple"],
-            custom_id="Blurple"
-        )
-
-        async def button_callback(interaction: discord.Interaction):
-            self.color_choice_per_user_id[interaction.user.id] = interaction.data["custom_id"]
-            print(f"user {interaction.user.id} chose color: {interaction.data['custom_id']}")
-
-        green_button.callback = button_callback
-        red_button.callback = button_callback
-        gray_button.callback = button_callback
-        blurple_button.callback = button_callback
-
-        view = View()
-        view.add_item(green_button)
-        view.add_item(red_button)
-        view.add_item(gray_button)
-        view.add_item(blurple_button)
-        return view
-
     async def start_round(self, ctx):
-        await ctx.send("`Let the game begin`", view=self.get_view(), embed=self.get_embed())
+        await ctx.send(
+            "`Let the game begin`", view=self.get_view(), embed=self.get_embed()
+        )
         await asyncio.sleep(15)
         await ctx.send("`30 seconds remaining`")
         await asyncio.sleep(15)
@@ -128,32 +127,38 @@ class ColorGameFirstRound(ColorGameRound):
             )
             await ctx.send("`Recap: `", embed=embed)
             return {}
-        print(f"Proceeding to solve round with following player choices : {self.color_choice_per_user_id}")
+        print(
+            f"Proceeding to solve round with following player choices : {self.color_choice_per_user_id}"
+        )
         color_counts = Counter(self.color_choice_per_user_id.values())
         try:
             color1, color2 = color_counts.most_common(2)
             winner_ids = {
-                user_id for user_id, color in self.color_choice_per_user_id.items()
+                user_id
+                for user_id, color in self.color_choice_per_user_id.items()
                 if color == color1[0] or color == color2[0]
             }
             embed = discord.Embed(
                 title=f"Time is up. Winning colors are:",
-                description=f"{color1[0]} {self.emojis_per_color[color1[0]]} and {color2[0]} {self.emojis_per_color[color2[0]]}",
+                description=f"{color1[0]} and {color2[0]}",
                 color=0x0052FB,
             )
         except ValueError as e:
             color1 = color_counts.most_common(1)[0][0]
             winner_ids = {
-                user_id for user_id, color in self.color_choice_per_user_id.items()
+                user_id
+                for user_id, color in self.color_choice_per_user_id.items()
                 if color == color1
             }
             embed = discord.Embed(
                 title=f"Time is up. Winning color is:",
-                description=f"{color1} {self.emojis_per_color[color1]}",
+                description=f"{color1}",
                 color=0x0052FB,
             )
 
-        winner_members = await asyncio.gather(*[self.bot.fetch_user(user_id) for user_id in winner_ids])
+        winner_members = await asyncio.gather(
+            *[self.bot.fetch_user(user_id) for user_id in winner_ids]
+        )
         embed.add_field(
             name="Players proceeding to the next round:",
             value=" ".join([x.mention for x in winner_members]),
@@ -165,15 +170,15 @@ class ColorGameFirstRound(ColorGameRound):
 
 class ColorGameSecondRound(ColorGameRound):
     round_name = "Hide out"
-    emojis_per_color = {
-        "Green": "<a:pepeJam:929537274293682226>",
-        "Gray": "<a:HACKERMANS:929840112404148314> ",
-        "Blurple": "<a:Gambage:938910418087325789> ",
-        "Red": "<a:WeeHypers:935040370646057040> "}
+    emojis = {
+        "<a:pepeJam:929537274293682226>",
+        "<a:HACKERMANS:929840112404148314>",
+        "<a:Gambage:938910418087325789>",
+        "<a:WeeHypers:935040370646057040>",
+    }
 
-    def __init__(self, allowed_player_ids: Set[str], bot):
-        super().__init__(allowed_player_ids, bot)
-        self.color_choice_per_user_id: Optional[Dict[int, str]] = dict()
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style):
+        super().__init__(allowed_player_ids, bot, button_style)
 
     def get_embed(self) -> Embed:
         embed = discord.Embed(
@@ -185,59 +190,16 @@ class ColorGameSecondRound(ColorGameRound):
         embed.add_field(
             name="Rules",
             value="In this round players have to choose a color. "
-                  "People having chosen one of the two least chosen colors will be eliminated."
-                  "You have 5 minutes.",
+            "People having chosen one of the two least chosen colors will be eliminated."
+            "You have 5 minutes.",
             inline=False,
         )
         return embed
 
-    def get_view(self) -> View:
-        green_button = Button(
-            label="Green",
-            style=discord.ButtonStyle.green,
-            emoji=self.emojis_per_color["Green"],
-            custom_id="Green"
-        )
-        red_button = Button(
-            label="Red",
-            style=discord.ButtonStyle.red,
-            emoji=self.emojis_per_color["Red"],
-            custom_id="Red"
-        )
-
-        gray_button = Button(
-            label="gray",
-            style=discord.ButtonStyle.gray,
-            emoji=self.emojis_per_color["Gray"],
-            custom_id="Gray"
-        )
-
-        blurple_button = Button(
-            label="blurple",
-            style=discord.ButtonStyle.blurple,
-            emoji=self.emojis_per_color["Blurple"],
-            custom_id="Blurple"
-        )
-
-        async def button_callback(interaction: discord.Interaction):
-            if interaction.user.id in self.allowed_player_ids:
-                self.color_choice_per_user_id[interaction.user.id] = interaction.data["custom_id"]
-                print(f"user {interaction.user.id} chose color: {interaction.data['custom_id']}")
-
-        green_button.callback = button_callback
-        red_button.callback = button_callback
-        gray_button.callback = button_callback
-        blurple_button.callback = button_callback
-
-        view = View()
-        view.add_item(green_button)
-        view.add_item(red_button)
-        view.add_item(gray_button)
-        view.add_item(blurple_button)
-        return view
-
     async def start_round(self, ctx):
-        await ctx.send("`Let the game begin`", view=self.get_view(), embed=self.get_embed())
+        await ctx.send(
+            "`Let the game begin`", view=self.get_view(), embed=self.get_embed()
+        )
         await asyncio.sleep(15)
         await ctx.send("`30 seconds remaining`")
         await asyncio.sleep(15)
@@ -254,32 +216,38 @@ class ColorGameSecondRound(ColorGameRound):
             )
             await ctx.send("`Recap: `", embed=embed)
             return {}
-        print(f"Proceeding to solve round with following player choices : {self.color_choice_per_user_id}")
+        print(
+            f"Proceeding to solve round with following player choices : {self.color_choice_per_user_id}"
+        )
         color_counts = Counter(self.color_choice_per_user_id.values())
         try:
             color1, color2 = color_counts.most_common()[-2:]
             winner_ids = {
-                user_id for user_id, color in self.color_choice_per_user_id.items()
+                user_id
+                for user_id, color in self.color_choice_per_user_id.items()
                 if color == color1[0] or color == color2[0]
             }
             embed = discord.Embed(
                 title=f"Time is up. Winning colors are:",
-                description=f"{color1[0]} {self.emojis_per_color[color1[0]]} and {color2[0]} {self.emojis_per_color[color2[0]]}",
+                description=f"{color1[0]}  and {color2[0]}",
                 color=0x0052FB,
             )
         except ValueError as e:
             color1 = color_counts.most_common()[-1][0]
             winner_ids = {
-                user_id for user_id, color in self.color_choice_per_user_id.items()
+                user_id
+                for user_id, color in self.color_choice_per_user_id.items()
                 if color == color1
             }
             embed = discord.Embed(
                 title=f"Time is up. Winning color is:",
-                description=f"{color1} {self.emojis_per_color[color1]}",
+                description=f"{color1}",
                 color=0x0052FB,
             )
 
-        winner_members = await asyncio.gather(*[self.bot.fetch_user(user_id) for user_id in winner_ids])
+        winner_members = await asyncio.gather(
+            *[self.bot.fetch_user(user_id) for user_id in winner_ids]
+        )
         embed.add_field(
             name="Players proceeding to the next round:",
             value=" ".join([x.mention for x in winner_members]),
@@ -287,13 +255,3 @@ class ColorGameSecondRound(ColorGameRound):
         )
         await ctx.send("`Recap: `", embed=embed)
         return winner_ids
-
-
-
-
-
-
-
-
-
-

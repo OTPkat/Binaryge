@@ -37,6 +37,7 @@ def main():
             channel_name="01-color-game",
         )
     )
+
     archive_bot.run(discord_token)
 
 

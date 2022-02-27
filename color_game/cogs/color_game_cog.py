@@ -13,10 +13,10 @@ TIME_BETWEEN_LEVEL = 15
 
 class ColorGame(commands.Cog):
     def __init__(
-            self,
-            bot: commands.Bot,
-            logger: logging.Logger,
-            channel_name: str,
+        self,
+        bot: commands.Bot,
+        logger: logging.Logger,
+        channel_name: str,
     ):
         self.bot = bot
         self.logger = logger
@@ -29,10 +29,21 @@ class ColorGame(commands.Cog):
     @commands.check(only_owners)
     @commands.command()
     async def start_color_game(self, ctx):
-        winner_ids = await ColorGameFirstRound(allowed_player_ids=set(), bot=self.bot).start_round(ctx)
-        await ctx.send(f"You can rest {TIME_BETWEEN_LEVEL // 60} minutes before next round.")
+        winner_ids = await ColorGameFirstRound(
+            allowed_player_ids=set(),
+            bot=self.bot,
+            button_style=discord.ButtonStyle.red,
+        ).start_round(ctx)
+        await ctx.send(
+            f"You can rest {TIME_BETWEEN_LEVEL // 60} minutes before next round."
+        )
         await asyncio.sleep(TIME_BETWEEN_LEVEL)
-        await ColorGameSecondRound(allowed_player_ids=winner_ids, bot=self.bot).start_round(ctx)
-        await ctx.send(f"You can rest {TIME_BETWEEN_LEVEL // 60} minutes before next round.")
+        await ColorGameSecondRound(
+            allowed_player_ids=winner_ids,
+            bot=self.bot,
+            button_style=discord.ButtonStyle.blurple,
+        ).start_round(ctx)
+        await ctx.send(
+            f"You can rest {TIME_BETWEEN_LEVEL // 60} minutes before next round."
+        )
         await asyncio.sleep(TIME_BETWEEN_LEVEL)
-
