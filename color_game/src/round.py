@@ -87,7 +87,7 @@ class ColorGameRound(ABC):
         return winner_ids
 
 
-class ColorGameFirstRound(ColorGameRound):
+class TwoMostChosenWin(ColorGameRound):
     round_name = "Follow them"
     emojis = {
         animojis.PEPE_CLAP,
@@ -178,7 +178,7 @@ class ColorGameFirstRound(ColorGameRound):
         return winner_ids
 
 
-class ColorGameSecondRound(ColorGameRound):
+class TwoLeastChosenWin(ColorGameRound):
     round_name = "Hide out"
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
@@ -257,7 +257,7 @@ class ColorGameSecondRound(ColorGameRound):
         return winner_ids
 
 
-class ColorGameThirdRound(ColorGameRound):
+class MostChosenWin(ColorGameRound):
     round_name = "The Biggest"
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
@@ -299,6 +299,71 @@ class ColorGameThirdRound(ColorGameRound):
 
         else:
             winning_emoji = color_counts.most_common(1)[0][0]
+            winner_ids = {
+                user_id
+                for user_id, emoji in self.color_choice_per_user_id.items()
+                if emoji == winning_emoji
+            }
+            embed = discord.Embed(
+                title=f"Time is up",
+                description=f"Winning emoji is: {winning_emoji}",
+                color=0x0052FB,
+            )
+
+        winner_members = await asyncio.gather(
+            *[self.bot.fetch_user(user_id) for user_id in winner_ids]
+        )
+        embed.add_field(
+            name="Players proceeding to the next round:",
+            value=" ".join([x.mention for x in winner_members]),
+            inline=False,
+        )
+        await ctx.send(embed=embed)
+        return winner_ids
+
+
+class LeastChosenWin(ColorGameRound):
+    round_name = "The Smallest"
+    emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
+
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style):
+        super().__init__(allowed_player_ids, bot, button_style)
+
+    def get_embed(self, end_time: int) -> Embed:
+        embed = discord.Embed(
+            title=f"{self.round_name}",
+            description="The least chosen emoji will lead you to the next game."
+            "If only one emoji is chosen, 75% of you will be randomly eliminated",
+            color=0x0052FB,
+        )
+        embed.add_field(name="Choice Deadline", value=f"<t:{end_time}:R>")
+        return embed
+
+    async def solve_round(self, ctx):
+        color_counts = Counter(self.color_choice_per_user_id.values())
+        if not color_counts:
+            embed = discord.Embed(
+                title=f"Nobody played in time",
+                description=f"No winners",
+                color=0x0052FB,
+            )
+            await ctx.send(embed=embed)
+            return {}
+
+        elif len(color_counts) == 1:
+            color1, count = color_counts.popitem()
+            amount_players = color_counts[color1]
+            winner_ids = random.sample(
+                self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
+            )
+            embed = discord.Embed(
+                title=f"Time is up",
+                description=f"Everybody chose {color1}, I will randomly eliminate 75% of you.",
+                color=0x0052FB,
+            )
+
+        else:
+            winning_emoji = color_counts.most_common()[-1][0]
             winner_ids = {
                 user_id
                 for user_id, emoji in self.color_choice_per_user_id.items()

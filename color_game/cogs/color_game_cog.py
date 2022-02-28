@@ -6,14 +6,15 @@ import utils.emojis as animojis
 from typing import Optional, Dict
 from utils.command_check import only_owners, OWNERS
 from discord.ext import commands
-from color_game.src.round import ColorGameFirstRound, ColorGameSecondRound, ColorGameThirdRound
+from color_game.src.round import TwoMostChosenWin, TwoLeastChosenWin, MostChosenWin, LeastChosenWin
 
 TIME_BETWEEN_LEVEL = 30
 
 ROUND_QUEUE = [
-    ColorGameFirstRound,
-    ColorGameSecondRound,
-    ColorGameThirdRound
+    TwoMostChosenWin,
+    TwoLeastChosenWin,
+    MostChosenWin,
+    LeastChosenWin
 ]
 
 
