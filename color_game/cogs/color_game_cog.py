@@ -1,19 +1,22 @@
 import asyncio
 import time
+
+import typing
 import discord
 import logging
 import utils.emojis as animojis
 from typing import Optional, Dict
 from utils.command_check import only_owners, OWNERS
 from discord.ext import commands
-from color_game.src.round import TwoMostChosenWin, TwoLeastChosenWin, MostChosenWin, LeastChosenWin
+from color_game.src.round import TwoMostChosenWin, TwoLeastChosenWin, MostChosenWin, LeastChosenWin, ColorGameRound, TwoLeastChosenLoose
 
 TIME_BETWEEN_LEVEL = 30
 
-ROUND_QUEUE = [
+ROUND_QUEUE: typing.List[typing.Type[ColorGameRound]] = [
+    TwoLeastChosenLoose,
     TwoMostChosenWin,
-    TwoLeastChosenWin,
     MostChosenWin,
+    TwoLeastChosenWin,
     LeastChosenWin
 ]
 
