@@ -6,11 +6,15 @@ import utils.emojis as animojis
 from typing import Optional, Dict
 from utils.command_check import only_owners, OWNERS
 from discord.ext import commands
-from color_game.src.round import ColorGameFirstRound, ColorGameSecondRound
+from color_game.src.round import ColorGameFirstRound, ColorGameSecondRound, ColorGameThirdRound
 
-TIME_BETWEEN_LEVEL = 15
+TIME_BETWEEN_LEVEL = 30
 
-ROUND_QUEUE = [ColorGameFirstRound, ColorGameSecondRound]
+ROUND_QUEUE = [
+    ColorGameFirstRound,
+    ColorGameSecondRound,
+    ColorGameThirdRound
+]
 
 
 class ColorGame(commands.Cog):
@@ -34,10 +38,10 @@ class ColorGame(commands.Cog):
             title=f"{animojis.BONGO_PEPE} Peepo Experiment {animojis.BONGO_PEPE}",
             description=f"Welcome to the refined version of {dornick.mention}'s favorite experiment,"
             f" the **Peepo Experiment** {animojis.GAMBAGE}.\n"
-            " In each iteration of the Peepo Experiment you will have to choose an emoji, winners will be determined"
+            " In each iteration of the Peepo Experiment you will have to **choose an emoji**, winners will be determined"
             " on a rule that will vary on each round... \n"
-            f"You may team up {animojis.BONGO_LOVE}, betray friends {animojis.SCAM}, ... to make your way out of the"
-            f" Experiment {animojis.CIGAR} ... or you will rest in peace {animojis.DEADGE}",
+            f"You may team up {animojis.BONGO_LOVE}, betray friends {animojis.SCAM}, and basically do anything you think of"
+            f" to make your way out of the Peepo Experiment {animojis.CIGAR} ... or you will rest in peace {animojis.DEADGE}",
             color=0x0052FB,
         )
         return embed
@@ -99,6 +103,7 @@ class ColorGame(commands.Cog):
                         )
                     )
                     await asyncio.sleep(TIME_BETWEEN_LEVEL)
+
                 elif len(winner_ids) == 1:
                     winner_embed = await self.get_winner_embed(winner_ids.pop())
                     await ctx.send(embed=winner_embed)
