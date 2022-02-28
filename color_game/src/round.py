@@ -47,9 +47,9 @@ class ColorGameRound(ABC):
 
             async def button_callback(interaction: discord.Interaction):
                 if (not filter_ids) or (interaction.user.id in filter_ids):
-                    self.color_choice_per_user_id[interaction.user.id] = interaction.data[
-                        "custom_id"
-                    ]
+                    self.color_choice_per_user_id[
+                        interaction.user.id
+                    ] = interaction.data["custom_id"]
                     print(
                         f"user {interaction.user.id} chose color: {interaction.data['custom_id']}"
                     )
@@ -61,7 +61,6 @@ class ColorGameRound(ABC):
                             embed=choices_embed
                         )
                         self.player_choices_message = player_choices_message
-
 
             button.callback = button_callback
             view.add_item(button)
@@ -81,7 +80,7 @@ class ColorGameRound(ABC):
     async def start_round(self, ctx):
         await ctx.send(
             view=self.get_view(),
-            embed=self.get_embed(end_time=int(time.time()) + self.round_time)
+            embed=self.get_embed(end_time=int(time.time()) + self.round_time),
         )
         await asyncio.sleep(self.round_time)
         winner_ids = await self.solve_round(ctx=ctx)
@@ -113,7 +112,7 @@ class ColorGameFirstRound(ColorGameRound):
     async def start_round(self, ctx):
         await ctx.send(
             view=self.get_view(),
-            embed=self.get_embed(end_time=int(time.time()) + self.round_time)
+            embed=self.get_embed(end_time=int(time.time()) + self.round_time),
         )
         await asyncio.sleep(self.round_time)
         winner_ids = await self.solve_round(ctx=ctx)

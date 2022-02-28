@@ -4,7 +4,7 @@ import discord
 import logging
 import utils.emojis as animojis
 from typing import Optional, Dict
-from utils.command_check import only_owners
+from utils.command_check import only_owners, OWNERS
 from discord.ext import commands
 from color_game.src.round import ColorGameFirstRound, ColorGameSecondRound
 
@@ -58,8 +58,13 @@ class ColorGame(commands.Cog):
             description=f"{animojis.HYPERS} {winner.mention}  {animojis.HYPERS}",
             color=0x0052FB,
         )
-        embed.add_field(name=f"Reward {animojis.CIGAR}", value=f"Contact one of the admins for the reward.")
 
+        admins = await asyncio.gather(*[self.bot.fetch_user(owner) for owner in OWNERS])
+        admin_mention = " ".join([admin.mention for admin in admins])
+        embed.add_field(
+            name=f"Reward {animojis.CIGAR}",
+            value=f"Contact one of the admins for the reward: {admin_mention}",
+        )
         return embed
 
     @commands.check(only_owners)
@@ -89,15 +94,12 @@ class ColorGame(commands.Cog):
                 ).start_round(ctx)
                 if len(winner_ids) > 1:
                     await ctx.send(
-                        embed=self.get_break_embed(time_until_start=int(time.time()) + TIME_BETWEEN_LEVEL)
+                        embed=self.get_break_embed(
+                            time_until_start=int(time.time()) + TIME_BETWEEN_LEVEL
+                        )
                     )
                     await asyncio.sleep(TIME_BETWEEN_LEVEL)
                 elif len(winner_ids) == 1:
                     winner_embed = await self.get_winner_embed(winner_ids.pop())
-                    await ctx.send(
-                        embed=winner_embed
-                    )
+                    await ctx.send(embed=winner_embed)
                     return
-
-
-
