@@ -42,8 +42,8 @@ class ColorGame(commands.Cog):
             title=f"{animojis.BONGO_PEPE} Peepo Experiment {animojis.BONGO_PEPE}",
             description=f"Welcome to the refined version of {dornick.mention}'s favorite experiment,"
             f" the **Peepo Experiment** {animojis.GAMBAGE}.\n"
-            " In each iteration of the Peepo Experiment you will have to **choose an emoji**, winners will be determined"
-            " on a rule that will vary on each round... \n"
+            "In each iteration of the Peepo Experiment you will have to **choose an emoji**, winners will be determined"
+            f" on a rule that will vary on each round... If you don't submit your choice in time you will be eliminated {animojis.PEEPO_RIOT}.\n"
             f"You may team up {animojis.BONGO_LOVE}, betray friends {animojis.SCAM}, and basically do anything you think of"
             f" to make your way out of the Peepo Experiment {animojis.CIGAR} ... or you will rest in peace {animojis.DEADGE}",
             color=0x0052FB,
@@ -59,20 +59,27 @@ class ColorGame(commands.Cog):
         embed.add_field(name="Next round", value=f"<t:{time_until_start}:R>")
         return embed
 
-    async def get_winner_embed(self, winner_id: int):
-        winner = await self.bot.fetch_user(winner_id)
-        embed = discord.Embed(
-            title=f"{animojis.HYPES} Peepo Experiment Winner {animojis.HYPES}",
-            description=f"{animojis.HYPERS} {winner.mention}  {animojis.HYPERS}",
-            color=0x0052FB,
-        )
+    async def get_winner_embed(self, winner_id: Optional[int]=None):
+        if winner_id:
+            winner = await self.bot.fetch_user(winner_id)
+            embed = discord.Embed(
+                title=f"{animojis.HYPES} Peepo Experiment Winner {animojis.HYPES}",
+                description=f"{animojis.HYPERS} {winner.mention}  {animojis.HYPERS}",
+                color=0x0052FB,
+            )
 
-        admins = await asyncio.gather(*[self.bot.fetch_user(owner) for owner in OWNERS])
-        admin_mention = " ".join([admin.mention for admin in admins])
-        embed.add_field(
-            name=f"Reward {animojis.CIGAR}",
-            value=f"Contact one of the admins for the reward: {admin_mention}",
-        )
+            admins = await asyncio.gather(*[self.bot.fetch_user(owner) for owner in OWNERS])
+            admin_mention = " ".join([admin.mention for admin in admins])
+            embed.add_field(
+                name=f"Reward {animojis.CIGAR}",
+                value=f"Contact one of the admins for the reward: {admin_mention}",
+            )
+        else:
+            embed = discord.Embed(
+                title=f"{animojis.HYPES} Peepo Experiment Ended {animojis.HYPES}",
+                description=f"No winners this time, see you next batch",
+                color=0x0052FB,
+            )
         return embed
 
     @commands.check(only_owners)
@@ -108,7 +115,12 @@ class ColorGame(commands.Cog):
                     )
                     await asyncio.sleep(TIME_BETWEEN_LEVEL)
 
-                elif len(winner_ids) == 1:
-                    winner_embed = await self.get_winner_embed(winner_ids.pop())
+                else:
+                    if winner_ids:
+                        winner_embed = await self.get_winner_embed(winner_ids.pop())
+                    else:
+                        winner_embed = await self.get_winner_embed()
+
                     await ctx.send(embed=winner_embed)
                     return
+

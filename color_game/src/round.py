@@ -50,9 +50,6 @@ class ColorGameRound(ABC):
                     self.color_choice_per_user_id[
                         interaction.user.id
                     ] = interaction.data["custom_id"]
-                    print(
-                        f"user {interaction.user.id} chose color: {interaction.data['custom_id']}"
-                    )
                     choices_embed = self.get_current_player_choices_embed()
                     if self.player_choices_message:
                         await self.player_choices_message.edit(embed=choices_embed)
@@ -109,15 +106,6 @@ class TwoMostChosenWin(ColorGameRound):
         embed.add_field(name="Choice Deadline", value=f"<t:{end_time}:R>")
         return embed
 
-    async def start_round(self, ctx):
-        await ctx.send(
-            view=self.get_view(),
-            embed=self.get_embed(end_time=int(time.time()) + self.round_time),
-        )
-        await asyncio.sleep(self.round_time)
-        winner_ids = await self.solve_round(ctx=ctx)
-        return winner_ids
-
     async def solve_round(self, ctx) -> Optional[Set[int]]:
         color_counts = Counter(self.color_choice_per_user_id.values())
         if not color_counts:
@@ -130,8 +118,7 @@ class TwoMostChosenWin(ColorGameRound):
             return set()
 
         elif len(color_counts) == 1:
-            color1, count = color_counts.popitem()
-            amount_players = color_counts[color1]
+            color1, amount_players = color_counts.popitem()
             winner_ids = random.sample(
                 self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
             )
@@ -142,10 +129,10 @@ class TwoMostChosenWin(ColorGameRound):
             )
         elif len(color_counts) == 2:
             color1, color2 = color_counts.most_common(2)
-            amount_players = color_counts[color1] + color_counts[color2]
-            amount_of_winners = int(0.25 * amount_players)
+            amount_players = color1[1] + color2[1]
+            amount_of_winners = max(1, int(0.25 * amount_players))
             winner_ids = random.sample(
-                self.color_choice_per_user_id.keys(), max(1, amount_of_winners)
+                self.color_choice_per_user_id.keys(), amount_of_winners
             )
             embed = discord.Embed(
                 title=f"Time is up",
@@ -170,10 +157,11 @@ class TwoMostChosenWin(ColorGameRound):
         winner_members = await asyncio.gather(
             *[self.bot.fetch_user(user_id) for user_id in winner_ids]
         )
-        embed.add_field(
-            name="Players proceeding to the next round:",
-            value=" ".join([x.mention for x in winner_members]),
-        )
+        if winner_members:
+            embed.add_field(
+                name="Players proceeding to the next round:",
+                value=" ".join([x.mention for x in winner_members]),
+            )
         await ctx.send(embed=embed)
         return winner_ids
 
@@ -197,18 +185,16 @@ class TwoLeastChosenWin(ColorGameRound):
 
     async def solve_round(self, ctx):
         color_counts = Counter(self.color_choice_per_user_id.values())
+        winner_ids = set()
         if not color_counts:
             embed = discord.Embed(
                 title=f"Nobody played in time",
                 description=f"No winners",
                 color=0x0052FB,
             )
-            await ctx.send(embed=embed)
-            return {}
 
         elif len(color_counts) == 1:
-            color1, count = color_counts.popitem()
-            amount_players = color_counts[color1]
+            color1, amount_players = color_counts.popitem()
             winner_ids = random.sample(
                 self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
             )
@@ -220,10 +206,10 @@ class TwoLeastChosenWin(ColorGameRound):
 
         elif len(color_counts) == 2:
             color1, color2 = color_counts.most_common(2)
-            amount_players = color_counts[color1] + color_counts[color2]
-            amount_of_winners = int(0.25 * amount_players)
+            amount_players = color1[1] + color2[1]
+            amount_of_winners = max(1, int(0.25 * amount_players))
             winner_ids = random.sample(
-                self.color_choice_per_user_id.keys(), max(1, amount_of_winners)
+                self.color_choice_per_user_id.keys(), amount_of_winners
             )
             embed = discord.Embed(
                 title=f"Time is up",
@@ -248,11 +234,12 @@ class TwoLeastChosenWin(ColorGameRound):
         winner_members = await asyncio.gather(
             *[self.bot.fetch_user(user_id) for user_id in winner_ids]
         )
-        embed.add_field(
-            name="Players proceeding to the next round:",
-            value=" ".join([x.mention for x in winner_members]),
-            inline=False,
-        )
+        if winner_members:
+            embed.add_field(
+                name="Players proceeding to the next round:",
+                value=" ".join([x.mention for x in winner_members]),
+                inline=False,
+            )
         await ctx.send(embed=embed)
         return winner_ids
 
@@ -276,6 +263,7 @@ class MostChosenWin(ColorGameRound):
 
     async def solve_round(self, ctx):
         color_counts = Counter(self.color_choice_per_user_id.values())
+        winner_ids = set()
         if not color_counts:
             embed = discord.Embed(
                 title=f"Nobody played in time",
@@ -283,11 +271,10 @@ class MostChosenWin(ColorGameRound):
                 color=0x0052FB,
             )
             await ctx.send(embed=embed)
-            return {}
 
         elif len(color_counts) == 1:
             color1, count = color_counts.popitem()
-            amount_players = color_counts[color1]
+            amount_players = count
             winner_ids = random.sample(
                 self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
             )
@@ -313,11 +300,12 @@ class MostChosenWin(ColorGameRound):
         winner_members = await asyncio.gather(
             *[self.bot.fetch_user(user_id) for user_id in winner_ids]
         )
-        embed.add_field(
-            name="Players proceeding to the next round:",
-            value=" ".join([x.mention for x in winner_members]),
-            inline=False,
-        )
+        if winner_members:
+            embed.add_field(
+                name="Players proceeding to the next round:",
+                value=" ".join([x.mention for x in winner_members]),
+                inline=False,
+            )
         await ctx.send(embed=embed)
         return winner_ids
 
@@ -340,6 +328,7 @@ class LeastChosenWin(ColorGameRound):
         return embed
 
     async def solve_round(self, ctx):
+        winner_ids = set()
         color_counts = Counter(self.color_choice_per_user_id.values())
         if not color_counts:
             embed = discord.Embed(
@@ -347,12 +336,10 @@ class LeastChosenWin(ColorGameRound):
                 description=f"No winners",
                 color=0x0052FB,
             )
-            await ctx.send(embed=embed)
-            return {}
 
         elif len(color_counts) == 1:
             color1, count = color_counts.popitem()
-            amount_players = color_counts[color1]
+            amount_players = count
             winner_ids = random.sample(
                 self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
             )
@@ -378,17 +365,18 @@ class LeastChosenWin(ColorGameRound):
         winner_members = await asyncio.gather(
             *[self.bot.fetch_user(user_id) for user_id in winner_ids]
         )
-        embed.add_field(
-            name="Players proceeding to the next round:",
-            value=" ".join([x.mention for x in winner_members]),
-            inline=False,
-        )
+        if winner_members:
+            embed.add_field(
+                name="Players proceeding to the next round:",
+                value=" ".join([x.mention for x in winner_members]),
+                inline=False,
+            )
         await ctx.send(embed=embed)
         return winner_ids
 
 
 class TwoLeastChosenLoose(ColorGameRound):
-    round_name = "Hide out"
+    round_name = "Let them hide"
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
     def __init__(self, allowed_player_ids: Set[str], bot, button_style):
@@ -406,18 +394,16 @@ class TwoLeastChosenLoose(ColorGameRound):
 
     async def solve_round(self, ctx):
         color_counts = Counter(self.color_choice_per_user_id.values())
+        winner_ids = set()
         if not color_counts:
             embed = discord.Embed(
                 title=f"Nobody played in time",
                 description=f"No winners",
                 color=0x0052FB,
             )
-            await ctx.send(embed=embed)
-            return {}
 
         elif len(color_counts) == 1:
-            color1, count = color_counts.popitem()
-            amount_players = color_counts[color1]
+            color1, amount_players = color_counts.popitem()
             winner_ids = random.sample(
                 self.color_choice_per_user_id.keys(), max(1, int(0.25 * amount_players))
             )
@@ -429,10 +415,10 @@ class TwoLeastChosenLoose(ColorGameRound):
 
         elif len(color_counts) == 2:
             color1, color2 = color_counts.most_common(2)
-            amount_players = color_counts[color1] + color_counts[color2]
-            amount_of_winners = int(0.25 * amount_players)
+            amount_players = color1[1] + color2[1]
+            amount_of_winners = max(1, int(0.25 * amount_players))
             winner_ids = random.sample(
-                self.color_choice_per_user_id.keys(), max(1, amount_of_winners)
+                self.color_choice_per_user_id.keys(), amount_of_winners
             )
             embed = discord.Embed(
                 title=f"Time is up",
@@ -457,10 +443,12 @@ class TwoLeastChosenLoose(ColorGameRound):
         winner_members = await asyncio.gather(
             *[self.bot.fetch_user(user_id) for user_id in winner_ids]
         )
-        embed.add_field(
-            name="Players proceeding to the next round:",
-            value=" ".join([x.mention for x in winner_members]),
-            inline=False,
-        )
+        if winner_members:
+            embed.add_field(
+                name="Players proceeding to the next round:",
+                value=" ".join([x.mention for x in winner_members]),
+                inline=False,
+            )
+
         await ctx.send(embed=embed)
         return winner_ids
