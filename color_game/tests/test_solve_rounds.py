@@ -8,7 +8,7 @@ def color_counts_list():
     return [
         Counter(["a", "b", "c"]),
         Counter(["a", "a"]),
-        Counter(["a", "a", "a","a", "a", "a", "b", "b"]),
+        Counter(["a", "a", "a", "a", "a", "a", "b", "b"]),
         Counter(["a", "a", "a", "b", "b", "c"]),
     ]
 
@@ -33,6 +33,3 @@ def test_two_most_chosen_win(color_counts_list):
                 assert amount_of_winners == 2
             else:
                 assert amount_of_winners == 5
-
-
-
