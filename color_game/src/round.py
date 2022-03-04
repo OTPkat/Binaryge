@@ -14,8 +14,6 @@ import utils.emojis as animojis
 
 class ColorGameRound(ABC):
     emojis: Set[str]
-    round_time: int = 30
-    hint_time: int = 10
 
     def __init__(
         self,
@@ -23,7 +21,8 @@ class ColorGameRound(ABC):
         bot: commands.Bot,
         button_style: discord.ButtonStyle,
         round_name: str,
-        hint_time: int
+        hint_time: int,
+        round_time: int
     ):
         self.allowed_player_ids = allowed_player_ids
         self.bot = bot
@@ -32,6 +31,7 @@ class ColorGameRound(ABC):
         self.player_choices_message: Optional[discord.Message] = None
         self.color_choice_per_user_id: Optional[Dict[int, str]] = dict()
         self.hint_time = hint_time
+        self.round_time = round_time
 
     @abstractmethod
     def get_embed(self, end_time: int) -> Embed:
@@ -42,7 +42,6 @@ class ColorGameRound(ABC):
         ...
 
     async def solve_round(self, ctx) -> Optional[Set[int]]:
-        await ctx.send(embed=self.get_current_player_choices_embed())
         color_counts = Counter(self.color_choice_per_user_id.values())
         winner_ids, embed = self.get_winner_ids(color_counts=color_counts)
         winner_members = await asyncio.gather(
@@ -112,8 +111,8 @@ class TwoMostChosenWin(ColorGameRound):
         animojis.BONGO_PEPE,
     }
 
-    def __init__(self, allowed_player_ids: Optional[Set[str]], bot, button_style, round_name: str, hint_time: int):
-        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
+    def __init__(self, allowed_player_ids: Optional[Set[str]], bot, button_style, round_name: str, hint_time: int, round_time: int):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time, round_time)
 
     def get_winner_ids(self, color_counts: Counter) -> Tuple[Optional[Set[str]], Embed]:
         winner_ids = set()
@@ -175,8 +174,8 @@ class TwoMostChosenWin(ColorGameRound):
 class TwoLeastChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
-        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time, round_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time, round_time)
 
     def get_winner_ids(self, color_counts: Counter) -> Tuple[Optional[Set[str]], Embed]:
         winner_ids = set()
@@ -221,7 +220,7 @@ class TwoLeastChosenWin(ColorGameRound):
             }
             embed = discord.Embed(
                 title=f"{animojis.PEEPO_RIOT} Time is up {animojis.PEEPO_RIOT}",
-                description=f"Winning emojis are: {color1[0]}  and {color2[0]}",
+                description=f"Loosing emojis are: {color1[0]}  and {color2[0]}",
                 color=0x0052FB,
             )
         return winner_ids, embed
@@ -240,8 +239,8 @@ class TwoLeastChosenWin(ColorGameRound):
 class MostChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
-        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time, round_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time, round_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
@@ -292,8 +291,8 @@ class MostChosenWin(ColorGameRound):
 class LeastChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
-        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time, round_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time, round_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
@@ -344,8 +343,8 @@ class LeastChosenWin(ColorGameRound):
 class TwoLeastChosenLoose(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
-        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time, round_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time, round_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
