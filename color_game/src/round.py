@@ -42,6 +42,7 @@ class ColorGameRound(ABC):
         ...
 
     async def solve_round(self, ctx) -> Optional[Set[int]]:
+        await ctx.send(embed=self.get_current_player_choices_embed())
         color_counts = Counter(self.color_choice_per_user_id.values())
         winner_ids, embed = self.get_winner_ids(color_counts=color_counts)
         winner_members = await asyncio.gather(

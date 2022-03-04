@@ -21,7 +21,6 @@ TIME_BETWEEN_LEVEL = 60 * 3
 TIME_HINT_LEVEL = 60
 
 ROUND_QUEUE: typing.List[typing.Type[ColorGameRound]] = [
-    TwoMostChosenWin,
     TwoLeastChosenLoose,
     TwoMostChosenWin,
     MostChosenWin,
@@ -100,7 +99,7 @@ class ColorGame(commands.Cog):
 
         await ctx.message.channel.purge(limit=2000)
         try:
-            delay = 60 * 60 * int(delay)
+            delay = int(delay)
         except ValueError:
             delay = 0
         intro_embed = await self.get_introductory_embed()
