@@ -17,7 +17,8 @@ from color_game.src.round import (
     TwoLeastChosenLoose,
 )
 
-TIME_BETWEEN_LEVEL = 30
+TIME_BETWEEN_LEVEL = 60 * 3
+TIME_HINT_LEVEL = 60
 
 ROUND_QUEUE: typing.List[typing.Type[ColorGameRound]] = [
     TwoMostChosenWin,
@@ -119,7 +120,9 @@ class ColorGame(commands.Cog):
                     allowed_player_ids=winner_ids,
                     bot=self.bot,
                     button_style=discord.ButtonStyle.blurple,
-                    round_name=f"Round {round_count}"
+                    round_name=f"Round {round_count}",
+                    hint_time=TIME_HINT_LEVEL
+
                 ).start_round(ctx)
                 if len(winner_ids) > 1:
                     await ctx.send(

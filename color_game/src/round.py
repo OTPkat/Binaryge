@@ -15,13 +15,15 @@ import utils.emojis as animojis
 class ColorGameRound(ABC):
     emojis: Set[str]
     round_time: int = 30
+    hint_time: int = 10
 
     def __init__(
         self,
         allowed_player_ids: Optional[Set[str]],
         bot: commands.Bot,
         button_style: discord.ButtonStyle,
-        round_name: str
+        round_name: str,
+        hint_time: int
     ):
         self.allowed_player_ids = allowed_player_ids
         self.bot = bot
@@ -29,6 +31,7 @@ class ColorGameRound(ABC):
         self.round_name = round_name
         self.player_choices_message: Optional[discord.Message] = None
         self.color_choice_per_user_id: Optional[Dict[int, str]] = dict()
+        self.hint_time = hint_time
 
     @abstractmethod
     def get_embed(self, end_time: int) -> Embed:
@@ -61,6 +64,7 @@ class ColorGameRound(ABC):
         )
         for choice, amount in color_counts.items():
             choices_embed.add_field(name=choice, value=amount, inline=False)
+
         return choices_embed
 
     def get_view(self, filter_ids: Optional[Set[str]] = None) -> View:
@@ -73,14 +77,9 @@ class ColorGameRound(ABC):
                     self.color_choice_per_user_id[
                         interaction.user.id
                     ] = interaction.data["custom_id"]
-                    choices_embed = self.get_current_player_choices_embed()
                     if self.player_choices_message:
+                        choices_embed = self.get_current_player_choices_embed()
                         await self.player_choices_message.edit(embed=choices_embed)
-                    else:
-                        player_choices_message = await interaction.channel.send(
-                            embed=choices_embed
-                        )
-                        self.player_choices_message = player_choices_message
 
             button.callback = button_callback
             view.add_item(button)
@@ -92,7 +91,14 @@ class ColorGameRound(ABC):
             view=self.get_view(self.allowed_player_ids),
             embed=self.get_embed(end_time=int(time.time()) + self.round_time),
         )
-        await asyncio.sleep(self.round_time)
+        self.player_choices_message = await ctx.channel.send(
+                f"{animojis.PEEPO_RIOT} The choices distribution will be public until: <t:{int(time.time()) + self.hint_time}:R> {animojis.PEEPO_RIOT}",
+                embed=self.get_current_player_choices_embed()
+        )
+        await asyncio.sleep(self.hint_time)
+        await self.player_choices_message.delete()
+        self.player_choices_message = None
+        await asyncio.sleep(self.round_time - self.hint_time)
         winner_ids = await self.solve_round(ctx=ctx)
         return winner_ids
 
@@ -105,8 +111,8 @@ class TwoMostChosenWin(ColorGameRound):
         animojis.BONGO_PEPE,
     }
 
-    def __init__(self, allowed_player_ids: Optional[Set[str]], bot, button_style, round_name: str):
-        super().__init__(allowed_player_ids, bot, button_style, round_name)
+    def __init__(self, allowed_player_ids: Optional[Set[str]], bot, button_style, round_name: str, hint_time: int):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
 
     def get_winner_ids(self, color_counts: Counter) -> Tuple[Optional[Set[str]], Embed]:
         winner_ids = set()
@@ -168,8 +174,8 @@ class TwoMostChosenWin(ColorGameRound):
 class TwoLeastChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name):
-        super().__init__(allowed_player_ids, bot, button_style, round_name)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
 
     def get_winner_ids(self, color_counts: Counter) -> Tuple[Optional[Set[str]], Embed]:
         winner_ids = set()
@@ -233,8 +239,8 @@ class TwoLeastChosenWin(ColorGameRound):
 class MostChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name):
-        super().__init__(allowed_player_ids, bot, button_style, round_name)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
@@ -285,8 +291,8 @@ class MostChosenWin(ColorGameRound):
 class LeastChosenWin(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name):
-        super().__init__(allowed_player_ids, bot, button_style, round_name)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
@@ -337,8 +343,8 @@ class LeastChosenWin(ColorGameRound):
 class TwoLeastChosenLoose(ColorGameRound):
     emojis = {animojis.PEPE_JAM, animojis.HACKERMANS, animojis.GAMBAGE, animojis.HYPERS}
 
-    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name):
-        super().__init__(allowed_player_ids, bot, button_style, round_name)
+    def __init__(self, allowed_player_ids: Set[str], bot, button_style, round_name, hint_time):
+        super().__init__(allowed_player_ids, bot, button_style, round_name, hint_time)
 
     def get_embed(self, end_time: int) -> Embed:
         embed = discord.Embed(
