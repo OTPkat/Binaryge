@@ -89,7 +89,7 @@ class ColorGameRound(ABC):
     async def start_round(self, ctx):
         await ctx.send(
             "`" + "-"*27 + f" {self.round_name} " + "-"*27 + "`",
-            view=self.get_view(),
+            view=self.get_view(self.allowed_player_ids),
             embed=self.get_embed(end_time=int(time.time()) + self.round_time),
         )
         await asyncio.sleep(self.round_time)

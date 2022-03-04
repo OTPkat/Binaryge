@@ -20,6 +20,7 @@ from color_game.src.round import (
 TIME_BETWEEN_LEVEL = 30
 
 ROUND_QUEUE: typing.List[typing.Type[ColorGameRound]] = [
+    TwoMostChosenWin,
     TwoLeastChosenLoose,
     TwoMostChosenWin,
     MostChosenWin,
